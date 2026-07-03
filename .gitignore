@@ -1,0 +1,30 @@
+# Databricks
+.databricks/
+*.pat
+
+# Credenciais / segredos (defesa em profundidade — nada disso deve existir no repo)
+.env
+*.env
+.databrickscfg
+secrets/
+*.key
+*.pem
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Bundle artifacts
+.databricks/bundle/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
