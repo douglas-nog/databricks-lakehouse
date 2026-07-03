@@ -13,7 +13,7 @@ def ingest_bronze(spark: SparkSession, source_path: str, checkpoint_path: str,
         .load(source_path)
         .select(
             "*",
-            F.col("_metadate.file_name").alias("file_name"),
+            F.col("_metadata.file_name").alias("file_name"),
             F.current_timestamp().alias("ingestion_time"),
         )
         .writeStream
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     ingest_bronze(
         spark=spark,
         source_path="/Volumes/databrickslab/trips/raw",
-        checkpoint_path="/Volumes/databrickslab/trips/_checkpoints/bronze",
-        schema_path="/Volumes/databrickslab/trips/_schemas/bronze",
+        checkpoint_path="/Volumes/databrickslab/trips/_internal/_checkpoints/bronze",
+        schema_path="/Volumes/databrickslab/trips/_internal/_schemas/bronze",
         target_table="databrickslab.trips.bronze",
     )

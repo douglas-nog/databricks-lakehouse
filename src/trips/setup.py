@@ -9,4 +9,6 @@ spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{SCHEMA}")
 
 spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.{SCHEMA}.raw")
 
+spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.{SCHEMA}._internal")
+
 print("UC Setup completed")
