@@ -21,12 +21,21 @@ def transform_silver(spark: SparkSession, source_table: str,
 
     with_reason = renamed.withColumn(
         "quarantine_reason",
-        F.when(F.col("dropoff_datetime") < F.col(
-            "pickup_datetime"), "inverted_timestamps")
-         .when(F.col("trip_distance") <= 0, "non_positive_distance")
-         .when(F.col("fare_amount") < 0, "negative_fare")
-         .when((F.col("passenger_count").isNull()) | (F.col("passenger_count") == 0), "invalid_passenger_count")
-         .otherwise(None)
+        F.when(
+            F.date_format(
+                "pickup_datetime", "yyyy-MM") != F.regexp_extract("file_name", r"(\d{4}-\d{2})", 1),
+            "date_out_of_file_range"
+        )
+        .when(
+            (F.unix_timestamp("dropoff_datetime") -
+             F.unix_timestamp("pickup_datetime")) / 3600 > 24,
+            "implausible_duration"
+        )
+        .when(F.col("dropoff_datetime") < F.col("pickup_datetime"), "inverted_timestamps")
+        .when(F.col("trip_distance") <= 0, "non_positive_distance")
+        .when(F.col("fare_amount") < 0, "negative_fare")
+        .when((F.col("passenger_count").isNull()) | (F.col("passenger_count") == 0), "invalid_passenger_count")
+        .otherwise(None)
     )
 
     silver = with_reason.filter(
