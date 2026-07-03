@@ -17,7 +17,7 @@ Status: ✅ done · 🔶 partial · ⬜ pending
 | Silver | Structured Streaming transformation | ✅ |
 | Silver | Data quality via quarantine (with reason) | ✅ |
 | Silver | Column standardization (snake_case) | ✅ |
-| Gold | Business aggregate table | ⬜ |
+| Gold | Business aggregate table | ✅ |
 | Orchestration | Lakeflow Job (bronze → silver → gold) | ⬜ |
 | CI/CD | Declarative Automation Bundle (dev/test/prod) | ⬜ |
 | CI/CD | GitHub Actions (validate + deploy) | ⬜ |
