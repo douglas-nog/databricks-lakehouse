@@ -10,8 +10,10 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
-    "databricks-connect==17.3.*",
     "pyspark==4.0.*",
+]
+connect = [
+    "databricks-connect==17.3.*",
 ]
 
 [project.scripts]
