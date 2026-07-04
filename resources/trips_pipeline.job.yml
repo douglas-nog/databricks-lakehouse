@@ -3,7 +3,7 @@ resources:
     trips_pipeline:
       name: trips_pipeline
       schedule:
-        quartz_cron_expression: "0 50 18 * * ?"
+        quartz_cron_expression: "0 15 19 * * ?"
         timezone_id: "America/Sao_Paulo"
         pause_status: UNPAUSED
       tasks:
