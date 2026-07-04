@@ -53,3 +53,12 @@ business capability; `trips`, `zones`, and `drivers` are entities within it.
   one domain (`mobility`) currently exists.
 - Volumes and pipeline control metadata (checkpoints, schemas) need a defined
   home in this model — resolved separately when refactoring setup.
+
+## Portability note
+This model assigns the environment to the catalog (`<domain>_<environment>`)
+because a single workspace is used. In a multi-workspace setup, the environment
+would instead be carried by the workspace itself, and the catalog would hold only
+the domain (`mobility`). Because catalog names are injected as bundle variables
+rather than hardcoded, migrating between these two topologies requires only
+changing target variable values and workspace hosts — the pipeline code, which
+builds paths from the injected catalog, does not change.
