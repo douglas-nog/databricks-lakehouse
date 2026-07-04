@@ -19,7 +19,7 @@ Status: ✅ done · 🔶 partial · ⬜ pending
 | Silver | Column standardization (snake_case) | ✅ |
 | Gold | Business aggregate table | ✅ |
 | Orchestration | Lakeflow Job (bronze → silver → gold) | ⬜ |
-| CI/CD | Declarative Automation Bundle (dev/test/prod) | ⬜ |
+| CI/CD | Declarative Automation Bundle (dev/stg/prod) | ⬜ |
 | CI/CD | GitHub Actions (validate + deploy) | ⬜ |
 
 ## Architecture Decisions
