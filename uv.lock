@@ -250,8 +250,10 @@ version = "0.0.1"
 source = { editable = "." }
 
 [package.dev-dependencies]
-dev = [
+connect = [
     { name = "databricks-connect" },
+]
+dev = [
     { name = "pyspark" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -261,8 +263,8 @@ dev = [
 [package.metadata]
 
 [package.metadata.requires-dev]
+connect = [{ name = "databricks-connect", specifier = "==17.3.*" }]
 dev = [
-    { name = "databricks-connect", specifier = "==17.3.*" },
     { name = "pyspark", specifier = "==4.0.*" },
     { name = "pytest" },
     { name = "pytest-cov" },
