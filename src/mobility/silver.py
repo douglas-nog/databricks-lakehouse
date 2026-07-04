@@ -1,11 +1,15 @@
-from databricks.connect import DatabricksSession
+import argparse
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 
-def transform_silver(spark: SparkSession, source_table: str,
-                     silver_checkpoint: str, silver_table: str,
-                     quarantine_checkpoint: str, quarantine_table: str) -> None:
+def transform_silver(spark: SparkSession, catalog: str) -> None:
+    source_table = f"{catalog}.bronze.trips"
+    silver_table = f"{catalog}.silver.trips"
+    quarantine_table = f"{catalog}.silver.trips_quarantine"
+    silver_checkpoint = f"/Volumes/{catalog}/silver/_internal/_checkpoints/trips"
+    quarantine_checkpoint = f"/Volumes/{catalog}/silver/_internal/_checkpoints/trips_quarantine"
+
     stream = spark.readStream.table(source_table)
 
     renamed = (
@@ -40,9 +44,7 @@ def transform_silver(spark: SparkSession, source_table: str,
 
     silver = with_reason.filter(
         F.col("quarantine_reason").isNull()).drop("quarantine_reason")
-
-    quarantine_silver = with_reason.filter(
-        F.col("quarantine_reason").isNotNull())
+    quarantine = with_reason.filter(F.col("quarantine_reason").isNotNull())
 
     silver_query = (
         silver.writeStream
@@ -50,9 +52,8 @@ def transform_silver(spark: SparkSession, source_table: str,
         .trigger(availableNow=True)
         .toTable(silver_table)
     )
-
     quarantine_query = (
-        quarantine_silver.writeStream
+        quarantine.writeStream
         .option("checkpointLocation", quarantine_checkpoint)
         .trigger(availableNow=True)
         .toTable(quarantine_table)
@@ -62,13 +63,13 @@ def transform_silver(spark: SparkSession, source_table: str,
     quarantine_query.awaitTermination()
 
 
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--catalog", required=True)
+    args = parser.parse_args()
+    spark = SparkSession.builder.getOrCreate()
+    transform_silver(spark, args.catalog)
+
+
 if __name__ == "__main__":
-    spark = DatabricksSession.builder.profile("dbc-azure-lab").getOrCreate()
-    transform_silver(
-        spark=spark,
-        source_table="databrickslab.trips.bronze",
-        silver_checkpoint="/Volumes/databrickslab/trips/_internal/_checkpoints/silver",
-        quarantine_checkpoint="/Volumes/databrickslab/trips/_internal/_checkpoints/quarantine_silver",
-        silver_table="databrickslab.trips.silver",
-        quarantine_table="databrickslab.trips.quarantine_silver"
-    )
+    main()

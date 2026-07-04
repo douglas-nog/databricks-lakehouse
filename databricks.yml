@@ -1,0 +1,55 @@
+# This is a Databricks asset bundle definition for databricks-lakehouse.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: databricks-lakehouse
+  uuid: f193e8f3-eba8-4981-8b0d-c2c47bcfba50
+
+include:
+  - resources/*.yml
+
+artifacts:
+  python_artifact:
+    type: whl
+    build: uv build --wheel
+
+# Values are injected at deploy time via BUNDLE_VAR_* environment variables,
+# so no identities or environment-specific values are committed to the repo.
+variables:
+  catalog:
+    description: The domain-environment catalog to use (e.g. mobility_dev)
+  workspace_user:
+    description: Deploy user for workspace paths and permissions
+  prod_sp:
+    description: Application ID of the service principal that runs prod jobs
+    default: ""
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-7405613325482314.14.azuredatabricks.net
+    variables:
+      catalog: mobility_dev
+
+  stg:
+    mode: development
+    workspace:
+      host: https://adb-7405613325482314.14.azuredatabricks.net
+    variables:
+      catalog: mobility_stg
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-7405613325482314.14.azuredatabricks.net
+      root_path: /Workspace/Users/${var.workspace_user}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: mobility_prod
+    run_as:
+      service_principal_name: ${var.prod_sp}
+    permissions:
+      - service_principal_name: ${var.prod_sp}
+        level: CAN_MANAGE
+      - user_name: ${var.workspace_user}
+        level: CAN_MANAGE

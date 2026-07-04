@@ -1,10 +1,14 @@
-from databricks.connect import DatabricksSession
+import argparse
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
 
-def ingest_bronze(spark: SparkSession, source_path: str, checkpoint_path: str,
-                  schema_path: str, target_table: str) -> None:
+def ingest_bronze(spark: SparkSession, catalog: str) -> None:
+    source_path = f"/Volumes/{catalog}/bronze/raw"
+    checkpoint_path = f"/Volumes/{catalog}/bronze/_internal/_checkpoints/trips"
+    schema_path = f"/Volumes/{catalog}/bronze/_internal/_schemas/trips"
+    target_table = f"{catalog}.bronze.trips"
+
     query = (
         spark.readStream
         .format("cloudFiles")
@@ -25,12 +29,13 @@ def ingest_bronze(spark: SparkSession, source_path: str, checkpoint_path: str,
     query.awaitTermination()
 
 
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--catalog", required=True)
+    args = parser.parse_args()
+    spark = SparkSession.builder.getOrCreate()
+    ingest_bronze(spark, args.catalog)
+
+
 if __name__ == "__main__":
-    spark = DatabricksSession.builder.profile("dbc-azure-lab").getOrCreate()
-    ingest_bronze(
-        spark=spark,
-        source_path="/Volumes/databrickslab/trips/raw",
-        checkpoint_path="/Volumes/databrickslab/trips/_internal/_checkpoints/bronze",
-        schema_path="/Volumes/databrickslab/trips/_internal/_schemas/bronze",
-        target_table="databrickslab.trips.bronze",
-    )
+    main()
