@@ -33,7 +33,7 @@ targets:
       catalog: mobility_dev
 
   stg:
-    mode: development
+    mode: production
     workspace:
       host: https://adb-7405613325482314.14.azuredatabricks.net
     variables:

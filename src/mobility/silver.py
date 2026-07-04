@@ -1,19 +1,12 @@
 import argparse
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import functions as F
 
 
-def transform_silver(spark: SparkSession, catalog: str) -> None:
-    source_table = f"{catalog}.bronze.trips"
-    silver_table = f"{catalog}.silver.trips"
-    quarantine_table = f"{catalog}.silver.trips_quarantine"
-    silver_checkpoint = f"/Volumes/{catalog}/silver/_internal/_checkpoints/trips"
-    quarantine_checkpoint = f"/Volumes/{catalog}/silver/_internal/_checkpoints/trips_quarantine"
-
-    stream = spark.readStream.table(source_table)
-
-    renamed = (
-        stream
+def rename_columns(df: DataFrame) -> DataFrame:
+    """Standardize source column names to snake_case."""
+    return (
+        df
         .withColumnRenamed("VendorID", "vendor_id")
         .withColumnRenamed("tpep_pickup_datetime", "pickup_datetime")
         .withColumnRenamed("tpep_dropoff_datetime", "dropoff_datetime")
@@ -23,24 +16,44 @@ def transform_silver(spark: SparkSession, catalog: str) -> None:
         .withColumnRenamed("Airport_fee", "airport_fee")
     )
 
-    with_reason = renamed.withColumn(
+
+def apply_quarantine_reason(df: DataFrame) -> DataFrame:
+    """Add a quarantine_reason column: null when valid, first failing rule otherwise.
+
+    Assumes columns are already renamed (pickup_datetime, dropoff_datetime, etc.)
+    and that file_name is present for date-range validation.
+    """
+    return df.withColumn(
         "quarantine_reason",
         F.when(
             F.date_format(
                 "pickup_datetime", "yyyy-MM") != F.regexp_extract("file_name", r"(\d{4}-\d{2})", 1),
-            "date_out_of_file_range"
+            "date_out_of_file_range",
         )
         .when(
             (F.unix_timestamp("dropoff_datetime") -
              F.unix_timestamp("pickup_datetime")) / 3600 > 24,
-            "implausible_duration"
+            "implausible_duration",
         )
         .when(F.col("dropoff_datetime") < F.col("pickup_datetime"), "inverted_timestamps")
         .when(F.col("trip_distance") <= 0, "non_positive_distance")
         .when(F.col("fare_amount") < 0, "negative_fare")
         .when((F.col("passenger_count").isNull()) | (F.col("passenger_count") == 0), "invalid_passenger_count")
-        .otherwise(None)
+        .otherwise(None),
     )
+
+
+def transform_silver(spark: SparkSession, catalog: str) -> None:
+    """Stream from bronze, apply transformations, route valid/invalid rows."""
+    source_table = f"{catalog}.bronze.trips"
+    silver_table = f"{catalog}.silver.trips"
+    quarantine_table = f"{catalog}.silver.trips_quarantine"
+    silver_checkpoint = f"/Volumes/{catalog}/silver/_internal/_checkpoints/trips"
+    quarantine_checkpoint = f"/Volumes/{catalog}/silver/_internal/_checkpoints/trips_quarantine"
+
+    stream = spark.readStream.table(source_table)
+    renamed = rename_columns(stream)
+    with_reason = apply_quarantine_reason(renamed)
 
     silver = with_reason.filter(
         F.col("quarantine_reason").isNull()).drop("quarantine_reason")

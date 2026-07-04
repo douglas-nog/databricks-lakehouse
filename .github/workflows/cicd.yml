@@ -1,0 +1,58 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [develop, homolog, main]
+  push:
+    branches: [develop, homolog, main]
+
+env:
+  DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+  DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+  BUNDLE_VAR_workspace_user: ${{ secrets.DATABRICKS_CLIENT_ID }}
+  BUNDLE_VAR_prod_sp: ${{ secrets.DATABRICKS_CLIENT_ID }}
+
+jobs:
+  validate:
+    name: Validate & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle validate -t dev
+      - run: |
+          uv sync --dev
+          uv run pytest tests/ -v
+
+  deploy-dev:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy -t dev
+
+  deploy-stg:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/homolog'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy -t stg
+
+  deploy-prod:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy -t prod

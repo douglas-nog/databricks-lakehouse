@@ -11,6 +11,7 @@ dev = [
     "pytest-cov",
     "ruff",
     "databricks-connect==17.3.*",
+    "pyspark==4.0.*",
 ]
 
 [project.scripts]
