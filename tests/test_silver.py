@@ -2,7 +2,7 @@ import pytest
 from datetime import datetime
 from pyspark.sql import SparkSession
 
-from mobility.silver import apply_quarantine_reason
+from mobility.trips.silver import apply_quarantine_reason
 
 
 @pytest.fixture(scope="session")
@@ -57,14 +57,12 @@ def test_inverted_timestamps_is_quarantined(spark):
 
 
 def test_date_out_of_file_range_is_quarantined(spark):
-    # pickup in 2002 but file is 2024-01
     row = _row(datetime(2002, 12, 31, 10, 0), datetime(
         2002, 12, 31, 10, 30), 5.0, 20.0, 2)
     assert _reason(spark, row) == "date_out_of_file_range"
 
 
 def test_rule_priority_date_over_fare(spark):
-    # both date-out-of-range AND negative fare; date wins (first in chain)
     row = _row(datetime(2002, 1, 1, 10, 0), datetime(
         2002, 1, 1, 10, 30), 5.0, -1.0, 2)
     assert _reason(spark, row) == "date_out_of_file_range"
