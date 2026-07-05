@@ -31,3 +31,5 @@ htmlcov/
 data/
 temp/
 dist/
+__pycache__/
+*.pyc

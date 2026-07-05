@@ -17,10 +17,10 @@ connect = [
 ]
 
 [project.scripts]
-setup-uc = "mobility.setup:main"
-ingest-bronze = "mobility.bronze:main"
-transform-silver = "mobility.silver:main"
-build-gold = "mobility.gold:main"
+setup-uc = "mobility.infra.setup:main"
+ingest-bronze = "mobility.trips.bronze:main"
+transform-silver = "mobility.trips.silver:main"
+build-gold = "mobility.trips.gold:main"
 
 [build-system]
 requires = ["hatchling"]
